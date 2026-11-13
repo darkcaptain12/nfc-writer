@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>IBAN Bilgileri</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #fff;
+      color: #090909;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    main { width: min(100%, 480px); }
+    .mark { width: 34px; height: 34px; border: 2px solid #090909; border-radius: 50%; margin-bottom: 32px; }
+    h1 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1; letter-spacing: -0.07em; margin: 0 0 12px; }
+    .intro { margin: 0 0 40px; color: #555; font-size: 1rem; line-height: 1.5; }
+    dl { margin: 0; border-top: 1px solid #090909; }
+    .row { padding: 20px 0; border-bottom: 1px solid #d4d4d4; }
+    dt { color: #666; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+    dd { margin: 0; font-size: 1.1rem; font-weight: 600; overflow-wrap: anywhere; }
+    #iban { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .025em; }
+    button {
+      width: 100%; margin-top: 24px; min-height: 54px; border: 1px solid #090909;
+      border-radius: 0; background: #090909; color: #fff; font: inherit; font-weight: 700;
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    button:hover, button:focus-visible { background: #fff; color: #090909; outline: 2px solid #090909; outline-offset: 3px; }
+    #status { min-height: 1.4em; margin: 14px 0 0; font-size: .9rem; text-align: center; }
+    #status.error { color: #a10000; }
+    footer { margin-top: 44px; color: #777; font-size: .8rem; }
+    @media (max-width: 360px) { body { padding: 18px; } .mark { margin-bottom: 24px; } .intro { margin-bottom: 28px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true"></div>
+    <h1>IBAN</h1>
+    <p class="intro">Ödeme için aşağıdaki bilgileri kullanabilirsiniz.</p>
+    <dl>
+      <div class="row">
+        <dt>Alıcı</dt>
+        <!-- Alıcı adını buradan düzenleyin. -->
+        <dd>AD SOYAD / ŞİRKET UNVANI</dd>
+      </div>
+      <div class="row">
+        <dt>IBAN</dt>
+        <!-- IBAN'ı buradan düzenleyin. Boşluksuz da yazabilirsiniz. -->
+        <dd id="iban">TR00 0000 0000 0000 0000 0000 00</dd>
+      </div>
+    </dl>
+    <button id="copyButton" type="button">IBAN’ı kopyala</button>
+    <p id="status" role="status" aria-live="polite"></p>
+    <footer>Güvenli ödeme için alıcı bilgilerini kontrol ediniz.</footer>
+  </main>
+  <script>
+    const ibanElement = document.getElementById('iban');
+    const button = document.getElementById('copyButton');
+    const status = document.getElementById('status');
+
+    function showStatus(message, isError = false) {
+      status.textContent = message;
+      status.className = isError ? 'error' : '';
+    }
+
+    function fallbackCopy(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(area);
+      area.select();
+      area.setSelectionRange(0, text.length);
+      const copied = document.execCommand('copy');
+      area.remove();
+      return copied;
+    }
+
+    button.addEventListener('click', async () => {
+      const iban = ibanElement.textContent.replace(/\s+/g, ' ').trim();
+      if (!iban || iban === 'TR00 0000 0000 0000 0000 0000 00') {
+        showStatus('Lütfen önce geçerli IBAN bilgisini ekleyin.', true);
+        return;
+      }
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard API kullanılamıyor');
+        await navigator.clipboard.writeText(iban);
+        showStatus('IBAN kopyalandı.');
+      } catch (error) {
+        if (fallbackCopy(iban)) showStatus('IBAN kopyalandı.');
+        else showStatus('Kopyalanamadı. IBAN’a basılı tutup manuel olarak kopyalayın.', true);
+      }
+    });
+  </script>
+</body>
+</html>
